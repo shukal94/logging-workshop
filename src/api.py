@@ -46,11 +46,53 @@ class JsonPlaceholderApi(BaseApi):
     base_url: str
     POSTS = "posts"
 
+
     def __init__(self, http_client: HttpClient, base_url: str):
         super().__init__(http_client)
         self.base_url = base_url
 
-    def get_posts(self):
-        response = self.http_client.get(url=f"{self.base_url}/{self.POSTS}")
+    def get_posts(self, user_id=None):
+        params = {"userId": user_id}
+        response = self.http_client.get(url=f"{self.base_url}/{self.POSTS}", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def get_post_by_id(self, post_id: int):
+        response = self.http_client.get(url=f"{self.base_url}/{self.POSTS}/{post_id}")
+        response.raise_for_status()
+        return response.json()
+
+    def create_post(self, payload: dict):
+        headers = {"Content-type": "application/json; charset=UTF-8"}
+        response = self.http_client.post(
+            url=f"{self.base_url}/{self.POSTS}",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def update_post(self, post_id: int, payload: dict):
+        headers = {"Content-type": "application/json; charset=UTF-8"}
+        response = self.http_client.put(
+            url=f"{self.base_url}/{self.POSTS}/{post_id}",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def patch_post(self, post_id: int, payload: dict):
+        headers = {"Content-type": "application/json; charset=UTF-8"}
+        response = self.http_client.patch(
+            url=f"{self.base_url}/{self.POSTS}/{post_id}",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def delete_post(self, post_id: int):
+        response = self.http_client.delete(url=f"{self.base_url}/{self.POSTS}/{post_id}")
         response.raise_for_status()
         return response.json()
