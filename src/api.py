@@ -4,10 +4,10 @@ from requests.adapters import HTTPAdapter, Retry
 
 class HttpClient:
 
-    def __init__(self):
+    def __init__(self, max_retries: int, retry_delay: float):
         self.retries = Retry(
-            total=5,
-            backoff_factor=0.5,
+            total=max_retries,
+            backoff_factor=retry_delay,
             status_forcelist=[
                 requests.codes.internal_server_error,
                 requests.codes.bad_gateway,
@@ -38,16 +38,16 @@ class HttpClient:
 class BaseApi:
     http_client: HttpClient
 
-    def __init__(self):
-        self.http_client = HttpClient()
+    def __init__(self, http_client: HttpClient):
+        self.http_client = http_client
 
 
 class JsonPlaceholderApi(BaseApi):
     base_url: str
     POSTS = "posts"
 
-    def __init__(self, base_url: str):
-        super().__init__()
+    def __init__(self, http_client: HttpClient, base_url: str):
+        super().__init__(http_client)
         self.base_url = base_url
 
     def get_posts(self):
