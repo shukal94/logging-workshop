@@ -13,3 +13,9 @@ def env(key: str, safe=True):
     if not safe and not value:
         raise KeyError(f"{key} was not found!")
     return value
+
+
+def read_from_file(path: str):
+    with open(path, 'r') as file:
+        content = file.read()
+    return content
