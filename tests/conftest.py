@@ -42,7 +42,7 @@ def sftp_client(config):
     host = sftp_config.get("host")
     port = sftp_config.getint("port")
     username = sftp_config.get("username")
-    password = utils.env("SFTP_PWD")
+    password = utils.env("SFTP_PWD", safe=False)
 
     ssh_client = SshClient(host, port, username, password)
     ssh_client.connect_ssh()
