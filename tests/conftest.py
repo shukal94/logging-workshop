@@ -82,9 +82,18 @@ def pw():
 @pytest.fixture(scope="function")
 def browser(config, pw):
     ui_config = config["ui"]
+    browser_name = ui_config.get("browser_name")
     headless = ui_config.getboolean("headless")
     timeout = ui_config.getint("timeout")
-    browser = pw.chromium.launch(headless=headless, timeout=timeout)
+
+    if browser_name == "chromium":
+        browser = pw.chromium.launch(headless=headless, timeout=timeout)
+    elif browser_name == "firefox":
+        browser = pw.firefox.launch(headless=headless, timeout=timeout)
+    elif browser_name == "webkit":
+        browser = pw.webkit.launch(headless=headless, timeout=timeout)
+    else:
+        raise RuntimeError(f"Unknown browser: {browser_name}")
 
     yield browser
 
