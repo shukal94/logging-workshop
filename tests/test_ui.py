@@ -1,11 +1,10 @@
 from playwright.sync_api import expect
+from src.ui import StartPage, ApiReferencePage
 
 
 def test_get_started_link(page):
-    page.goto("/")
-
-    # Click the get started link.
-    page.get_by_role("link", name="Get started").click()
-
-    # Expects page to have a heading with the name of Installation.
-    expect(page.get_by_role("heading", name="Installation")).to_be_visible()
+    start_page = StartPage(page)
+    start_page.open()
+    start_page.get_started_link.click()
+    api_reference_page = ApiReferencePage(page)
+    expect(api_reference_page.heading_label).to_be_visible()
