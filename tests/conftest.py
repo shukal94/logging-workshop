@@ -1,6 +1,7 @@
 import os
 import pytest
 import json
+import logging.config
 import src.utils as utils
 from playwright.sync_api import sync_playwright
 from src.api import JsonPlaceholderApi, HttpClient
@@ -8,19 +9,39 @@ from src.db import SqliteClient, TestDbClient
 from src.ssh import SshClient
 
 
-CONFIG_PATH = "config.ini"
+PROJECT_CONFIG_PATH = "config.ini"
+LOGGING_CONFIG_PATH = "logging.ini"
 DOWNLOADS_PATH = ".testdata/downloads"
+TEST_FILES_PATH = ".testdata/files"
 DB_SCRIPT_PATH = "init_db.sql"
+
+TEMPLATES_PATH = "resources"
+USER_TEMPLATE_PATH = f"{TEMPLATES_PATH}/user.txt"
+
+# loading config globally
+logging.config.fileConfig(fname=LOGGING_CONFIG_PATH)
+# suppressing paramiko native logging, but leave WARNING, ERROR, CRITICAL to not miss anything
+logging.getLogger("paramiko").setLevel(logging.WARNING)
+# it's a good practice to use one logger per module to identify where error located
+LOGGER = logging.getLogger("test")
 
 
 @pytest.fixture(scope="session", autouse=True)
 def mkdirs():
     os.makedirs(f"{os.getcwd()}/{DOWNLOADS_PATH}", exist_ok=True)
+    os.makedirs(f"{os.getcwd()}/{TEST_FILES_PATH}", exist_ok=True)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def log_test(request):
+    print() # in pytest 'PASSED' log has no newline
+    LOGGER.info(f"Test '{request.node.name}' started.")
+    yield
 
 
 @pytest.fixture(scope="session")
 def config():
-    return utils.load_config(path=CONFIG_PATH)
+    return utils.load_config(path=PROJECT_CONFIG_PATH)
 
 
 @pytest.fixture(scope="session")
@@ -96,7 +117,6 @@ def browser(config, pw):
         raise RuntimeError(f"Unknown browser: {browser_name}")
 
     yield browser
-
     browser.close()
 
 
@@ -106,16 +126,12 @@ def browser_context(config, browser):
     base_url = ui_config.get("base_url")
     viewport = json.loads(ui_config.get("viewport"))
     ctx = browser.new_context(viewport=viewport, base_url=base_url)
-
     yield ctx
-
     ctx.close()
 
 
 @pytest.fixture(scope="function")
 def page(browser_context):
     page = browser_context.new_page()
-
     yield page
-
     page.close()

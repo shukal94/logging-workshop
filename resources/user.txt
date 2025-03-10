@@ -1,0 +1,3 @@
+Name: {name}
+Occupation: {occupation}
+Address: {address}
