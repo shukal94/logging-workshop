@@ -1,5 +1,11 @@
+import logging
 import sqlite3
+from typing import Any
+
 import src.utils as utils
+
+
+LOGGER = logging.getLogger("db")
 
 
 class BaseDbClient:
@@ -30,6 +36,21 @@ class BaseDbClient:
         pass
 
 
+def log_query(statement: str):
+    LOGGER.info(f"Executing SQL Query: {statement}")
+
+
+def log_query_output(output: list | Any):
+    to_log = ""
+    if isinstance(output, list):
+        for output_entry in output:
+            output_entry = str(output_entry)
+            to_log = to_log + output_entry + "\n"
+    else:
+        to_log = to_log.join(str(output))
+    LOGGER.info(f"SQL Query result:\n{to_log}")
+
+
 class SqliteClient(BaseDbClient):
     connection: sqlite3.Connection
     cursor: sqlite3.Cursor
@@ -39,6 +60,8 @@ class SqliteClient(BaseDbClient):
 
     def connect(self):
         self.connection = sqlite3.connect(database=self.schema)
+        # Second approach: set logging method into trace callback. Logs the queries
+        self.connection.set_trace_callback(log_query)
 
     def get_cursor(self):
         if self.connection:
@@ -62,7 +85,10 @@ class SqliteClient(BaseDbClient):
                 result = self.cursor.execute(statement, parameters)
                 if not statement.startswith('SELECT'):
                     self.connection.commit()
-                return result.fetchall() if not fetch_one else result.fetchone()
+                query_output = result.fetchall() if not fetch_one else result.fetchone()
+                # Another way: since we control the connection and cursor stuff we can inject our logging there.
+                log_query_output(query_output)
+                return query_output
             except sqlite3.OperationalError as e:
                 print(e)
         raise RuntimeError("No active sqlite3 cursor!")
