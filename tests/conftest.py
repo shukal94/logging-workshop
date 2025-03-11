@@ -35,7 +35,7 @@ def mkdirs():
 @pytest.fixture(scope="function", autouse=True)
 def log_test(request):
     print() # in pytest 'PASSED' log has no newline
-    LOGGER.info(f"Test '{request.node.name}' started.")
+    print(f"TEST '{request.node.name}' STARTED.") # using print instead of log. Log is a part of the internal impl
     yield
 
 
