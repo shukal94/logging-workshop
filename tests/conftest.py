@@ -20,8 +20,15 @@ USER_TEMPLATE_PATH = f"{TEMPLATES_PATH}/user.txt"
 
 # loading config globally
 logging.config.fileConfig(fname=LOGGING_CONFIG_PATH)
+
+# since ini file doesn't support custom filters, we need to instantiate it and set programmatically
+custom_filter = utils.SensitiveInfoFilter()
+for handler in logging.getLogger().handlers:
+    handler.addFilter(custom_filter)
+
 # suppressing paramiko native logging, but leave WARNING, ERROR, CRITICAL to not miss anything
 logging.getLogger("paramiko").setLevel(logging.WARNING)
+
 # it's a good practice to use one logger per module to identify where error located
 LOGGER = logging.getLogger("test")
 

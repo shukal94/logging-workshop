@@ -1,45 +1,10 @@
-import json
 import requests
 import logging
+import src.utils as utils
 from requests.adapters import HTTPAdapter, Retry
 
 
 LOGGER = logging.getLogger("api")
-
-
-def api_interceptor(response: requests.Response, *args, **kwargs):
-    request: requests.PreparedRequest = response.request
-    log_request(request)
-    log_response(response)
-
-
-def log_request(request: requests.PreparedRequest):
-    request_headers = headers_to_str(request.headers)
-    request_body = body_to_str(request.body)
-    request_log = "# ========== REQUEST ========== #\n" + \
-                  f"{request.method} {request.url}\n" + \
-                  f"{request_headers}\n" + \
-                  f"{request_body}"
-    LOGGER.info(request_log)
-
-
-def log_response(response: requests.Response):
-    response_headers = headers_to_str(response.headers)
-    response_body = body_to_str(response.content)
-    response_log = "# ========== RESPONSE ========== #\n" + \
-                   f"HTTP{response.status_code}\n" + \
-                   f"{response_headers}\n" + \
-                   f"{response_body}"
-    LOGGER.info(response_log)
-
-
-def headers_to_str(headers):
-    return "\n".join(f"'{key}': '{value}'" for key, value in headers.items())
-
-
-# what if body not JSON??? TODO: add content-type dependency
-def body_to_str(body):
-    return "" if not body else json.dumps(json.loads(body.decode("utf-8")), indent=2)
 
 
 class HttpClient:
@@ -58,7 +23,7 @@ class HttpClient:
 
         self.session = requests.Session()
         # Yet another approach: add an event listener. The only one event listener available in requests: 'response'
-        self.session.hooks['response'].append(api_interceptor)
+        self.session.hooks['response'].append(utils.request_response_log_interceptor)
         self.session.mount("http://", HTTPAdapter(max_retries=self.retries))
 
     def get(self, url: str, params=None, headers=None, **kwargs):
