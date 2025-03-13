@@ -39,7 +39,7 @@ def write_to_file(content: str, path: str):
 
 
 class SensitiveInfoFilter(logging.Filter):
-    patterns = [r":\/\/(.*?)\@"]  # Mask credentials in URLs
+    patterns = [re.compile(r":\/\/(.*?)\@", re.IGNORECASE)]  # Mask credentials in URLs
     sensitive_keys = (
         "headers",
         "credentials",
@@ -67,12 +67,12 @@ class SensitiveInfoFilter(logging.Filter):
         if isinstance(args, dict):
             new_args = args.copy()
             for key in args.keys():
-                if key in self.sensitive_keys:
+                if key.lower() in self.sensitive_keys:
                     new_args[key] = "******"
                 else:
-                    new_args[key] = self.mask_sensitive_msg(args[key])
+                    new_args[key] = self.mask_sensitive_msg(args[key])  # Mask nested values
             return new_args
-        return tuple(self.mask_sensitive_msg(arg) for arg in args)
+        return tuple(self.mask_sensitive_msg(arg) for arg in args)  # Mask tuple args
 
     def mask_sensitive_msg(self, message):
         """Mask sensitive data in strings and URLs."""
@@ -80,10 +80,14 @@ class SensitiveInfoFilter(logging.Filter):
             return self.mask_sensitive_args(message)
         if isinstance(message, str):
             for pattern in self.patterns:
-                message = re.sub(pattern, "//:******@", message)
+                message = pattern.sub("//:******@", message)
+
+            # Mask dictionary-style sensitive keys (e.g., "{'password': '1234'}")
             for key in self.sensitive_keys:
-                message = re.sub(rf"'{key}': '[^']+'", f"'{key}': '******'", message)
-                message = re.sub(rf"\b{key}\b\s*[:=]?\s*\S+", f"{key}: ******", message)
+                key_pattern = re.compile(rf"'{key}': '[^']+'", re.IGNORECASE)
+                message = key_pattern.sub(f"'{key}': '******'", message)
+                inline_pattern = re.compile(rf"\b{key}\b\s*[:=]?\s*\S+", re.IGNORECASE)
+                message = inline_pattern.sub(f"{key}: ******", message)
 
         return message
 
