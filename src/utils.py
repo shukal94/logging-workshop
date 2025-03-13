@@ -39,7 +39,7 @@ def write_to_file(content: str, path: str):
 
 
 class SensitiveInfoFilter(logging.Filter):
-    patterns = [r":\/\/(.*?)\@"]
+    patterns = [r":\/\/(.*?)\@"]  # Mask credentials in URLs
     sensitive_keys = (
         "headers",
         "credentials",
@@ -51,35 +51,40 @@ class SensitiveInfoFilter(logging.Filter):
     def filter(self, record):
         try:
             record.args = self.mask_sensitive_args(record.args)
-            record.msg = self.mask_sensitive_msg(record.msg)
+            if record.args:
+                formatted_msg = record.msg % record.args
+            else:
+                formatted_msg = record.msg
+            record.msg = self.mask_sensitive_msg(formatted_msg)
+            record.args = ()
+
             return True
-        except Exception as e:
+        except Exception:
             return True
 
     def mask_sensitive_args(self, args):
+        """Mask sensitive values in dictionary or tuple arguments."""
         if isinstance(args, dict):
             new_args = args.copy()
             for key in args.keys():
                 if key in self.sensitive_keys:
                     new_args[key] = "******"
                 else:
-                    # mask sensitive data in dict values
                     new_args[key] = self.mask_sensitive_msg(args[key])
             return new_args
-        # when there are multi arg in record.args
-        return tuple([self.mask_sensitive_msg(arg) for arg in args])
+        return tuple(self.mask_sensitive_msg(arg) for arg in args)
 
     def mask_sensitive_msg(self, message):
-        # mask sensitive data in multi record.args
+        """Mask sensitive data in strings and URLs."""
         if isinstance(message, dict):
             return self.mask_sensitive_args(message)
         if isinstance(message, str):
             for pattern in self.patterns:
                 message = re.sub(pattern, "//:******@", message)
             for key in self.sensitive_keys:
-                pattern_str = rf"'{key}': '[^']+'"
-                replace = f"'{key}': '******'"
-                message = re.sub(pattern_str, replace, message)
+                message = re.sub(rf"'{key}': '[^']+'", f"'{key}': '******'", message)
+                message = re.sub(rf"\b{key}\b\s*[:=]?\s*\S+", f"{key}: ******", message)
+
         return message
 
 
