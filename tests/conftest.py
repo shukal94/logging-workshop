@@ -21,6 +21,11 @@ USER_TEMPLATE_PATH = f"{TEMPLATES_PATH}/user.txt"
 # loading config globally
 logging.config.fileConfig(fname=LOGGING_CONFIG_PATH)
 
+# turn off some non-needed stuff
+logging.logThreads = False
+logging.logProcesses = False
+logging.logMultiprocessing = False
+
 # since ini file doesn't support custom filters, we need to instantiate it and set programmatically
 custom_filter = utils.SensitiveInfoFilter()
 for handler in logging.getLogger().handlers:
