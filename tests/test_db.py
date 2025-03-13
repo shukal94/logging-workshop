@@ -5,6 +5,7 @@ DATA_TO_INSERT = (4, 'Google', 30, 'Somewhere in Nowhere', 1000)
 
 LOGGER = logging.getLogger("test")
 
+
 def test_select_all(test_db_client):
     LOGGER.info("Get all the companies and validate result is not empty")
     result = test_db_client.get_companies()
