@@ -1,6 +1,10 @@
 import os
+from logging import StreamHandler
+
 import pytest
+import yaml
 import json
+import logging.config
 import src.utils as utils
 from playwright.sync_api import sync_playwright
 from src.api import JsonPlaceholderApi, HttpClient
@@ -11,6 +15,24 @@ from src.ssh import SshClient
 CONFIG_PATH = "config.ini"
 DOWNLOADS_PATH = ".testdata/downloads"
 DB_SCRIPT_PATH = "init_db.sql"
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s',
+#     handlers=[logging.StreamHandler()]
+# )
+
+# logging.config.fileConfig("logging.conf")
+
+# with open("logging.yaml") as stream:
+#     try:
+#         logging.config.dictConfig(yaml.safe_load(stream))
+#     except yaml.YAMLError as exc:
+#         print(exc)
+
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.info("First log record")
 
 
 @pytest.fixture(scope="session", autouse=True)
