@@ -13,7 +13,7 @@ def test_posts(json_placeholder_api):
 
 
 def test_posts_by_user_id(json_placeholder_api):
-    LOGGER.info(f"Get all posts by {USER_ID}")
+    LOGGER.info(f"Get all posts by userId={USER_ID}")
     json = json_placeholder_api.get_posts(user_id=USER_ID)
     assert json is not None, "Nothing has been returned."
 
